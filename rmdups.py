@@ -411,7 +411,7 @@ def main():
                         dup_handled = True
                     # If no other handling was done print default info about dup file
                     if not dup_handled:
-                        info("can delete {size:,} bytes '{del_path}' it is same as '{keep_path}'".format(
+                        print("can delete {size:,} bytes '{del_path}' it is same as '{keep_path}'".format(
                             size = del_file.stat.st_size,
                             del_path = del_file.path,
                             keep_path = keep_file.path,
