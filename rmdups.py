@@ -4,6 +4,7 @@ import os
 import sys
 import argparse
 import functools
+import subprocess
 
 CACHE_SIZE = 1024
 FREAD_SIZE = 1024 * 64
@@ -116,6 +117,9 @@ def parse_args():
     parser.add_argument('--keep-dir', dest='keep_dir', action='append', help='directory to keep')
     parser.add_argument('--del-index', dest='del_index', action='append', help='index of files to consider for deletion')
     parser.add_argument('--del-dir', dest='del_dir', action='append', help='directory whos content to consider for deletion')
+    parser.add_argument('--dup-print', dest='dup_print', action='store_true', help='Print the duplicate file names to stdout terminated with LF')
+    parser.add_argument('--dup-print0', dest='dup_print0', action='store_true', help='Print the duplicate file names to stdout terminated by \\000 zero char')
+    parser.add_argument('--dup-cmd', dest='dup_cmd', action='append', help='Provide command(s) to run for the duplicate files, command is split on space, any {} is replaced by filename, if not found filename is appended')
     parser.add_argument('--dup-delete', dest='dup_delete', action='store_true', help='Delete duplicate files')
     args = parser.parse_args()
     return args
@@ -353,6 +357,28 @@ def main():
                     delete_file_count += 1
                     delete_byte_count += del_file.stat.st_size
                     dup_handled = False
+                    if args.dup_print:
+                        sys.stdout.write(del_file.path + '\n')
+                        dup_handled = True
+                    if args.dup_print0:
+                        sys.stdout.write(del_file.path + '\0')
+                        dup_handled = True
+                    if args.dup_cmd:
+                        # There could be multiple command to run, iterate over the list of commands
+                        for cmd in args.dup_cmd:
+                            cmd_args = []
+                            append_file_path = True
+                            for cmd_arg in cmd.split():
+                                cmd_arg_replaced = cmd_arg.replace('{}', del_file.path)
+                                if cmd_arg_replaced != cmd_arg:
+                                    append_file_path = False
+                                cmd_args.append(cmd_arg_replaced)
+                            if append_file_path:
+                                cmd_args.append(del_file.path)
+                            info("execute command: '%s'" % cmd_args)
+                            # subprocess.run(check=True) causes stop with exception if subprocess exits with non-zero
+                            subprocess.run(cmd_args, check=True)
+                            dup_handled = True
                     if args.dup_delete:
                         info("deleting %d bytes '%s' it is same as '%s'" % ( del_file.stat.st_size, del_file.path, keep_file.path ))
                         # os.unlink() throws exception if file is gone, good
