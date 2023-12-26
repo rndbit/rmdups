@@ -202,8 +202,6 @@ def compare_files(f1, f2):
         # If the caches differ
         if not f1.cache == f2.cache:
             cache_hit_diff += 1
-            if f1.name == 'pic 009.jpg':
-                info("WTF len(f1.cache)=%d, len(f2.cache)=%d" % (len(f1.cache), len(f2.cache)))
             return False
         # If both files are entirely in the cache
         if (len(f1.cache) == f1.stat.st_size and len(f2.cache) == f2.stat.st_size):
