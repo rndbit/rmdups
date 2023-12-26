@@ -53,7 +53,12 @@ class Index(object):
             # create a new mapping from file size to one sized array containing the file
             self.files_by_size[file.stat.st_size] = [ file ]
 
-        trace("added to %s index, size=%d size_count=%d, path=%s" % (self.label, file.stat.st_size, len(self.files_by_size[file.stat.st_size]), file.path))
+        trace("added to {label} index, size={file_size:,} size_count={count}, path={path}".format(
+            label = self.label,
+            file_size = file.stat.st_size,
+            count = len(self.files_by_size[file.stat.st_size]),
+            path = file.path,
+            ))
 
     # Always returns a list, possibly empty list
     def get_by_size(self, file):
@@ -331,7 +336,7 @@ def main():
     delete_byte_count = 0
     delete_file_count = 0
     for size in sorted(delete_index.files_by_size.keys(), reverse=True):
-        trace("comparing size: %d" % (size))
+        trace("comparing size: {:,}".format(size))
         delete_files = delete_index.files_by_size[size].copy()
         keep_files   = keep_index  .files_by_size.get(size, []).copy()
         for del_file in delete_files:
@@ -380,18 +385,27 @@ def main():
                             subprocess.run(cmd_args, check=True)
                             dup_handled = True
                     if args.dup_delete:
-                        info("deleting %d bytes '%s' it is same as '%s'" % ( del_file.stat.st_size, del_file.path, keep_file.path ))
+                        info("deleting {size:,} bytes '{del_path}' it is same as '{keep_path}'".format(
+                            size = del_file.stat.st_size,
+                            del_path = del_file.path,
+                            keep_path = keep_file.path,
+                            ))
                         # os.unlink() throws exception if file is gone, good
                         os.unlink(del_file.path)
                         dup_handled = True
                     # If no other handling was done print default info about dup file
                     if not dup_handled:
-                        info("can delete %d bytes '%s' it is same as '%s'" % ( del_file.stat.st_size, del_file.path, keep_file.path ))
-#                        info("can delete %d bytes '%s'" % ( del_file.stat.st_size, del_file.path ))
-
+                        info("can delete {size:,} bytes '{del_path}' it is same as '{keep_path}'".format(
+                            size = del_file.stat.st_size,
+                            del_path = del_file.path,
+                            keep_path = keep_file.path,
+                            ))
                     break
 
-    info("Can delete files=%d, bytes=%d" % (delete_file_count, delete_byte_count))
+    info("Can delete files={del_count}, bytes={del_byte_sum:,}".format(
+        del_count = delete_file_count,
+        del_byte_sum = delete_byte_count,
+        ))
 
     global cache_hit_same
     global cache_hit_diff
