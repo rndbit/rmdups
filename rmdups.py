@@ -274,7 +274,7 @@ def is_keep_file_of_interest(keep_file, delete_index):
 
 def main():
     args = parse_args()
-    print(args)
+    print(args, file=sys.stderr)
 
     delete_index = Index("DeleteIndex")
     keep_index = Index("KeepIndex")
