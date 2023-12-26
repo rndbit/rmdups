@@ -126,6 +126,7 @@ def parse_args():
     parser.add_argument('--dup-print0', dest='dup_print0', action='store_true', help='Print the duplicate file names to stdout terminated by \\000 zero char')
     parser.add_argument('--dup-cmd', dest='dup_cmd', action='append', help='Provide command(s) to run for the duplicate files, command is split on space, any {} is replaced by filename, if not found filename is appended')
     parser.add_argument('--dup-delete', dest='dup_delete', action='store_true', help='Delete duplicate files')
+    parser.add_argument('--dup-wipe', dest='dup_wipe', action='store_true', help='Write zeros to whole length of duplicate files before deleting')
     args = parser.parse_args()
     return args
 
@@ -382,6 +383,23 @@ def main():
                             # subprocess.run(check=True) causes stop with exception if subprocess exits with non-zero
                             subprocess.run(cmd_args, check=True)
                             dup_handled = True
+                    if args.dup_wipe:
+                        info("wiping and deleting {size:,} bytes '{del_path}' it is same as '{keep_path}'".format(
+                            size = del_file.stat.st_size,
+                            del_path = del_file.path,
+                            keep_path = keep_file.path,
+                            ))
+                        with open(del_file.path, "rb+") as fh:
+                            bc = del_file.stat.st_size # remaining byte count
+                            buf = b'\0' * 1024 * 64 # buffer to write
+                            while bc > 0:
+                                if bc < len(buf):
+                                    buf = b'\0' * bc
+                                wc = fh.write(buf)
+                                bc -= wc
+                        # os.unlink() throws exception if file is gone, good
+                        os.unlink(del_file.path)
+                        dup_handled = True
                     if args.dup_delete:
                         info("deleting {size:,} bytes '{del_path}' it is same as '{keep_path}'".format(
                             size = del_file.stat.st_size,
