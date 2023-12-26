@@ -27,7 +27,7 @@ Consider there are two directories both containing all files dumped from phone a
 This finds files in "phone-dump-prevoius" that are also in "phone-dump-latest" even if they got renamed.
 
     python3 rmdups.py --del-dir "phone-dump-prevoius" --keep-dir "phone-dump-latest"
-    # To actually delete the duplicates also add "--unlink" parameter.
+    # To actually delete the duplicates also add "--dup-delete" or "--dup-wipe" parameter.
 
 Consider old backup was extracted into directory "old-backup" and user wants to focus only on files
 in the "old-backup" directory that no longer appear or changed compared to "current-good-work" directory.

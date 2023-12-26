@@ -116,7 +116,7 @@ def parse_args():
     parser.add_argument('--keep-dir', dest='keep_dir', action='append', help='directory to keep')
     parser.add_argument('--del-index', dest='del_index', action='append', help='index of files to consider for deletion')
     parser.add_argument('--del-dir', dest='del_dir', action='append', help='directory whos content to consider for deletion')
-    parser.add_argument('--unlink', dest='unlink', action='store_true', help='Enable remove/unlink the duplicate files')
+    parser.add_argument('--dup-delete', dest='dup_delete', action='store_true', help='Delete duplicate files')
     args = parser.parse_args()
     return args
 
@@ -352,10 +352,14 @@ def main():
                 if equals:
                     delete_file_count += 1
                     delete_byte_count += del_file.stat.st_size
-                    if args.unlink:
+                    dup_handled = False
+                    if args.dup_delete:
                         info("deleting %d bytes '%s' it is same as '%s'" % ( del_file.stat.st_size, del_file.path, keep_file.path ))
+                        # os.unlink() throws exception if file is gone, good
                         os.unlink(del_file.path)
-                    else:
+                        dup_handled = True
+                    # If no other handling was done print default info about dup file
+                    if not dup_handled:
                         info("can delete %d bytes '%s' it is same as '%s'" % ( del_file.stat.st_size, del_file.path, keep_file.path ))
 #                        info("can delete %d bytes '%s'" % ( del_file.stat.st_size, del_file.path ))
 
