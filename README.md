@@ -1,5 +1,5 @@
 # rmdups
-Remove duplicate files that already exist in other directories
+Remove duplicate files that already exist at other paths.
 
 The program must be given one or more sets of files "to keep"
 and one or more sets of files to consider "to delete".
