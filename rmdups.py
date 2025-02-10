@@ -42,9 +42,11 @@ class IndexedFile(object):
 class Index(object):
     def __init__(self, label):
         self.label = label
+        self.files_in_added_order = [ ]
         self.files_by_size = { }
 
     def add_file(self, file):
+        self.files_in_added_order.append(file)
         if file.stat.st_size in self.files_by_size.keys():
             # add the new file to the list of files with same size
             # TODO change to insert in order of file_name, mtime
@@ -127,6 +129,7 @@ def parse_args():
     parser.add_argument('--dup-cmd', dest='dup_cmd', action='append', help='Provide command(s) to run for the duplicate files, command is split on space, any {} is replaced by filename, if not found filename is appended')
     parser.add_argument('--dup-delete', dest='dup_delete', action='store_true', help='Delete duplicate files')
     parser.add_argument('--dup-wipe', dest='dup_wipe', action='store_true', help='Write zeros to whole length of duplicate files before deleting')
+    parser.add_argument('--del-order', dest='del_order', choices=['added', 'size'], default='added', help='The order to process delete candiadte files in, default is the order the files were added in')
     args = parser.parse_args()
     return args
 
@@ -276,6 +279,23 @@ def is_keep_file_of_interest(keep_file, delete_index):
     return False
 
 
+def order_delete_files(del_order, delete_index):
+    if del_order == 'size':
+        for size in sorted(delete_index.files_by_size.keys(), reverse=True):
+            trace("comparing size: {:,}".format(size))
+            delete_files = delete_index.files_by_size[size].copy()
+            for del_file in delete_files:
+                yield del_file
+    # Else assume default order by "added"
+    else:
+        for del_file in delete_index.files_in_added_order:
+            trace("consider del candidate file '{path}' of size {size:,} bytes".format(
+                    path = del_file.path,
+                    size = del_file.stat.st_size,
+            ))
+            yield del_file
+
+
 def main():
     args = parse_args()
     print(args, file=sys.stderr)
@@ -332,13 +352,14 @@ def main():
     else:
         debug("keep_dir is NOT set")
 
+
     delete_byte_count = 0
     delete_file_count = 0
-    for size in sorted(delete_index.files_by_size.keys(), reverse=True):
-        trace("comparing size: {:,}".format(size))
-        delete_files = delete_index.files_by_size[size].copy()
+
+    for del_file in order_delete_files(args.del_order, delete_index):
+        size = del_file.stat.st_size
         keep_files   = keep_index  .files_by_size.get(size, []).copy()
-        for del_file in delete_files:
+        if True: # This `if` is meaningless, there used to be an inner loop that was removed ibut replaced by `if True` to avoid unindenting a large block of code
             comparator_for_del_file = lambda f1, f2 : compare_for_file(del_file, f1, f2)
             keep_files_sorted = sorted(keep_files, key=functools.cmp_to_key(comparator_for_del_file))
 #            keep_files_sorted = keep_files
