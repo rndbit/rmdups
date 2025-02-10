@@ -331,7 +331,7 @@ def main():
     # Create lambda that test if a file's size appears in sizes in delete_index
     keep_index_predicate = lambda ifile : is_keep_file_of_interest(ifile, delete_index)
 
-    # First load up all delete indexes and dirs scans
+    # Now load up all "keep" indexes and dirs scans
     if not args.keep_index is None:
         for keep_ind_file in args.keep_index:
             if keep_ind_file == '-':
@@ -365,7 +365,7 @@ def main():
 #            keep_files_sorted = keep_files
             trace("for del_file %s sorted list is %s" % (del_file.path, ",".join(map(lambda v: v.path, keep_files_sorted))))
 
-            # Test if the del_file is SAME file (not came content) as any of the files to be kept
+            # Test if the del_file is SAME file (not same content) as any of the files to be kept
             skip_del_file = False
             for keep_file in keep_files_sorted:
                 if ( del_file.stat.st_dev == keep_file.stat.st_dev and del_file.stat.st_ino == keep_file.stat.st_ino ):
